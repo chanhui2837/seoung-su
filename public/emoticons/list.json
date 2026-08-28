@@ -1,0 +1,14 @@
+[
+  {"id": "hi", "file": "hi.svg", "name": "하이", "keyword": "하이 안녕"},
+  {"id": "fighting", "file": "fighting.svg", "name": "화이팅", "keyword": "화이팅 힘내"},
+  {"id": "study", "file": "study.svg", "name": "열공중", "keyword": "공부 열공"},
+  {"id": "sleepy", "file": "sleepy.svg", "name": "졸려", "keyword": "졸려 자고싶어"},
+  {"id": "hungry", "file": "hungry.svg", "name": "배고파", "keyword": "배고파 밥"},
+  {"id": "love", "file": "love.svg", "name": "사랑해", "keyword": "사랑 하트"},
+  {"id": "faith", "file": "faith.svg", "name": "믿음", "keyword": "믿음 기도"},
+  {"id": "hope", "file": "hope.svg", "name": "소망", "keyword": "소망 별"},
+  {"id": "sunflower", "file": "sunflower.svg", "name": "해바라기", "keyword": "해바라기 교화"},
+  {"id": "yew", "file": "yew.svg", "name": "주목", "keyword": "주목 교목"},
+  {"id": "exam", "file": "exam.svg", "name": "시험대박", "keyword": "시험 대박 A+"},
+  {"id": "seongsu", "file": "seongsu.svg", "name": "성수파이팅", "keyword": "성수 파이팅"}
+]

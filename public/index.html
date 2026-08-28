@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>성수고등학교 - 우리 학교만의 특별한 공간</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        seongsu: { DEFAULT: '#1e3a8a', light: '#3b82f6', bg: '#eff6ff' },
+      }
+    }
+  }
+}
+</script>
+<style>
+  body{font-family:'Noto Sans KR',sans-serif}
+  .logo-font{font-family:'Gowun Dodum',serif}
+  .glass{backdrop-filter:blur(12px); background:rgba(255,255,255,0.85)}
+  .scroll-hide::-webkit-scrollbar{display:none}
+  .card-hover{transition:all .2s}
+  .card-hover:hover{transform:translateY(-3px); box-shadow:0 12px 30px rgba(30,58,138,.15)}
+</style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800">
+<!-- Header -->
+<header class="sticky top-0 z-40 glass border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3 cursor-pointer" onclick="location.reload()">
+      <img src="/logo.png" alt="성수고 로고" class="w-11 h-11 object-contain bg-white rounded-full p-1 border border-blue-100 shadow-sm" onerror="this.src='/logo.svg'">
+      <div>
+        <h1 class="font-black text-[19px] leading-none text-seongsu tracking-tight">성수고등학교</h1>
+        <p class="text-[11px] tracking-[0.2em] text-slate-500 font-medium">SEONGSU HIGH SCHOOL • 1958</p>
+      </div>
+      <span class="hidden sm:inline ml-3 px-2.5 py-1 bg-blue-600 text-white text-xs font-bold rounded-full">춘천 성수고 공식 포털</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <div id="headerUser" class="hidden items-center gap-3">
+        <img id="hdrAvatar" src="" class="w-9 h-9 rounded-full object-cover border-2 border-blue-600 hidden">
+        <div id="hdrFallback" class="w-9 h-9 rounded-full bg-blue-600 text-white grid place-items-center font-bold text-sm">?</div>
+        <div class="hidden sm:block text-left">
+          <div id="hdrName" class="text-sm font-bold leading-none"></div>
+          <div id="hdrSub" class="text-xs text-slate-500"></div>
+        </div>
+        <button onclick="openProfile()" class="ml-2 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-full hover:bg-black">프로필</button>
+        <button onclick="logout()" class="px-3 py-1.5 bg-white border text-xs font-bold rounded-full hover:bg-slate-50">로그아웃</button>
+      </div>
+      <div id="headerGuest" class="flex gap-2">
+        <button onclick="openAuth('login')" class="px-4 py-2 bg-white border border-slate-200 rounded-full text-sm font-bold hover:bg-slate-50">로그인</button>
+        <button onclick="openAuth('register')" class="px-5 py-2 bg-blue-600 text-white rounded-full text-sm font-bold hover:bg-blue-700 shadow">회원가입</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Guest Hero -->
+<div id="guestView" class="max-w-7xl mx-auto px-4 py-8">
+  <div class="grid lg:grid-cols-5 gap-6">
+    <!-- left hero -->
+    <div class="lg:col-span-3 bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700 rounded-[28px] p-8 text-white relative overflow-hidden">
+      <div class="absolute -right-10 -top-10 w-64 h-64 bg-white/10 rounded-full blur-2xl"></div>
+      <div class="absolute -left-10 -bottom-10 w-64 h-64 bg-indigo-300/20 rounded-full blur-2xl"></div>
+      <p class="inline-flex items-center gap-2 bg-white/15 backdrop-blur px-3 py-1 rounded-full text-xs font-bold tracking-wider">✨ 성수고 학생·교사 전용 · 2026 NEW</p>
+      <h2 class="mt-4 text-[32px] font-black leading-tight">성수고만의<br>특별한 학교 생활,<br><span class="text-blue-100">한 곳에서 모두</span></h2>
+      <p class="mt-3 text-blue-100/90 leading-relaxed text-[15px]">단순한 일정 공유를 넘어,<br>분실물·시설예약·멘토링까지<br><span class="font-bold text-white">성수고 학생을 위해 만든 올인원 포털</span></p>
+
+      <div class="mt-7 grid grid-cols-3 gap-3">
+        <div class="bg-white text-slate-800 rounded-2xl p-4 text-center">
+          <div class="text-xl">📅</div><div class="font-black text-sm mt-1">통합 캘린더</div><div class="text-[11px] text-slate-500">수행·시험 D-Day</div>
+        </div>
+        <div class="bg-white text-slate-800 rounded-2xl p-4 text-center">
+          <div class="text-xl">🔍</div><div class="font-black text-sm mt-1">분실물 센터</div><div class="text-[11px] text-slate-500">사진으로 바로 찾기</div>
+        </div>
+        <div class="bg-white text-slate-800 rounded-2xl p-4 text-center">
+          <div class="text-xl">🏫</div><div class="font-black text-sm mt-1">시설 예약</div><div class="text-[11px] text-slate-500">실시간 중복방지</div>
+        </div>
+      </div>
+
+      <div class="mt-6 flex items-center gap-3 bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/10">
+        <img src="/logo.png" class="w-12 h-12 bg-white rounded-full p-1" onerror="this.src='/logo.svg'">
+        <div class="text-sm"><div class="font-bold">성수고등학교 교훈</div><div class="text-blue-100 text-xs">“믿음 · 소망 · 사랑” — 성수학원의 정신</div></div>
+        <div class="ml-auto hidden sm:block text-right"><div class="text-xs opacity-70" id="mealDateLabel">오늘 급식</div><div class="font-bold text-sm" id="mealPreview">로딩중...</div><button onclick="openMealModal()" class="mt-1 px-2 py-1 bg-white/20 backdrop-blur rounded-full text-xs font-bold hover:bg-white/30">급식 보기 →</button></div>
+      </div>
+    </div>
+
+    <!-- right auth card -->
+    <div class="lg:col-span-2">
+      <div class="bg-white rounded-[28px] p-7 shadow-sm border border-slate-100">
+        <div class="flex gap-2 p-1 bg-slate-100 rounded-full w-fit">
+          <button id="tabLogin" onclick="switchAuth('login')" class="px-5 py-2 rounded-full font-bold text-sm bg-slate-900 text-white">로그인</button>
+          <button id="tabReg" onclick="switchAuth('register')" class="px-5 py-2 rounded-full font-bold text-sm text-slate-600">회원가입</button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="formLogin" class="mt-6 space-y-3" onsubmit="handleLogin(event)">
+          <div class="flex gap-2">
+            <label class="flex-1 flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-full border text-sm cursor-pointer has-[:checked]:bg-blue-600 has-[:checked]:text-white has-[:checked]:border-blue-600">
+              <input type="radio" name="loginRole" value="student" checked class="hidden" onchange="toggleLoginFields()"> 학생
+            </label>
+            <label class="flex-1 flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-full border text-sm cursor-pointer has-[:checked]:bg-blue-600 has-[:checked]:text-white has-[:checked]:border-blue-600">
+              <input type="radio" name="loginRole" value="teacher" class="hidden" onchange="toggleLoginFields()"> 선생님
+            </label>
+          </div>
+          <input id="loginName" placeholder="이름" required class="w-full px-4 py-3.5 bg-slate-50 border rounded-2xl outline-none focus:bg-white focus:border-blue-500">
+          <input id="loginStudentId" placeholder="학번 (예: 30105)" class="w-full px-4 py-3.5 bg-slate-50 border rounded-2xl outline-none focus:bg-white focus:border-blue-500">
+          <div id="loginSubjectWrap" class="hidden">
+            <select id="loginSubject" class="w-full px-4 py-3.5 bg-slate-50 border rounded-2xl outline-none focus:bg-white focus:border-blue-500">
+              <option value="">담당과목 선택</option>
+              <option>국어</option><option>수학</option><option>영어</option><option>과학</option><option>사회</option><option>체육</option><option>음악</option><option>미술</option><option>정보</option><option>기타</option>
+            </select>
+          </div>
+          <input id="loginPw" type="password" placeholder="비밀번호" required class="w-full px-4 py-3.5 bg-slate-50 border rounded-2xl outline-none focus:bg-white focus:border-blue-500">
+          <button class="w-full py-3.5 bg-blue-600 text-white rounded-2xl font-black hover:bg-blue-700">로그인하기 →</button>
+          <p class="text-xs text-center text-slate-500">학생은 <b>이름 + 학번</b> / 선생님은 <b>이름 + 담당과목</b> 으로 로그인</p>
+          <div id="loginMsg" class="text-sm text-red-600 text-center"></div>
+        </form>
+
+        <!-- Register Form -->
+        <form id="formReg" class="mt-6 space-y-3 hidden" onsubmit="handleRegister(event)">
+          <div class="flex gap-2">
+            <label class="flex-1 flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-full border text-sm cursor-pointer has-[:checked]:bg-blue-600 has-[:checked]:text-white">
+              <input type="radio" name="regRole" value="student" checked class="hidden" onchange="toggleRegFields()"> 학생
+            </label>
+            <label class="flex-1 flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-full border text-sm cursor-pointer has-[:checked]:bg-blue-600 has-[:checked]:text-white">
+              <input type="radio" name="regRole" value="teacher" class="hidden" onchange="toggleRegFields()"> 선생님
+            </label>
+          </div>
+          <input id="regName" placeholder="이름 (실명)" required class="w-full px-4 py-3.5 bg-slate-50 border rounded-2xl outline-none focus:border-blue-500">
+          <input id="regStudentId" placeholder="학번 5자리 (예: 30105 = 3학년1반5번)" required class="w-full px-4 py-3.5 bg-slate-50 border rounded-2xl outline-none focus:border-blue-500">
+          <div id="regSubjectWrap" class="hidden">
+            <select id="regSubject" class="w-full px-4 py-3.5 bg-slate-50 border rounded-2xl outline-none">
+              <option value="">담당과목 선택</option>
+              <option>국어</option><option>수학</option><option>영어</option><option>과학</option><option>사회</option><option>체육</option><option>음악</option><option>미술</option><option>정보</option><option>기타</option>
+            </select>
+          </div>
+          <input id="regPw" type="password" placeholder="비밀번호 (4자 이상)" required minlength="4" class="w-full px-4 py-3.5 bg-slate-50 border rounded-2xl outline-none focus:border-blue-500">
+          <input id="regPw2" type="password" placeholder="비밀번호 확인" required class="w-full px-4 py-3.5 bg-slate-50 border rounded-2xl outline-none focus:border-blue-500">
+          <button class="w-full py-3.5 bg-slate-900 text-white rounded-2xl font-black hover:bg-black">가입하고 시작하기</button>
+          <p class="text-[11px] text-slate-500 text-center">가입 정보는 서버(data/users.json)에 안전하게 암호화되어 저장됩니다.</p>
+          <div id="regMsg" class="text-sm text-red-600 text-center"></div>
+        </form>
+      </div>
+
+      <div class="mt-4 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex gap-3">
+        <div class="text-xl">💡</div>
+        <div class="text-sm leading-relaxed"><b>처음이신가요?</b><br><span class="text-slate-600">테스트: 학생 <b>홍길동 / 30101 / 1234</b> 로 가입해보세요. 바로 모든 기능을 쓸 수 있어요.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- bottom features preview (guest) -->
+  <div class="mt-6 grid md:grid-cols-3 gap-4">
+    <div class="bg-white rounded-3xl p-6 border card-hover">
+      <div class="w-10 h-10 rounded-full bg-blue-600 text-white grid place-items-center">📅</div>
+      <h3 class="font-black mt-3">수행·시험 D-Day 캘린더</h3>
+      <p class="text-sm text-slate-500 mt-1">학생·선생님이 함께 쓰는 캘린더. 내 수행평가까지 남은 일수를 한눈에. 시험, 과제 카테고리별로 색상 구분!</p>
+    </div>
+    <div class="bg-white rounded-3xl p-6 border card-hover">
+      <div class="w-10 h-10 rounded-full bg-emerald-500 text-white grid place-items-center">🔍</div>
+      <h3 class="font-black mt-3">분실물 AI 매칭</h3>
+      <p class="text-sm text-slate-500 mt-1">사진을 올리면 끝! 위치·날짜 자동 정리. 댓글로 주인 확인, 보관중/주인찾음 상태로 깔끔하게.</p>
+    </div>
+    <div class="bg-white rounded-3xl p-6 border card-hover">
+      <div class="w-10 h-10 rounded-full bg-violet-600 text-white grid place-items-center">🤝</div>
+      <h3 class="font-black mt-3">시설 예약 & 멘토링 마켓</h3>
+      <p class="text-sm text-slate-500 mt-1">체육관·음악실·스터디룸을 실시간 예약. 선배가 후배를 가르치는 재능마켓까지 — 성수고만의 연결.</p>
+    </div>
+  </div>
+</div>
+
+<!-- App View (logged in) -->
+<div id="appView" class="hidden max-w-7xl mx-auto px-4 py-6">
+  <!-- welcome banner -->
+  <div class="bg-gradient-to-r from-blue-700 to-indigo-600 rounded-[24px] p-6 text-white flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-4">
+      <img src="/logo.png" class="w-14 h-14 bg-white rounded-full p-1.5" onerror="this.src='/logo.svg'">
+      <div>
+        <div class="text-sm opacity-80">환영합니다,</div>
+        <div class="text-xl font-black"><span id="welcomeName"></span>님! 오늘도 성수에서 빛나는 하루 ✨</div>
+        <div id="welcomeSub" class="text-sm opacity-80"></div>
+      </div>
+    </div>
+    <div class="bg-white text-slate-900 rounded-2xl px-5 py-3 flex gap-6">
+      <div class="text-center"><div id="dDayText" class="font-black text-lg leading-none">D-?</div><div class="text-[11px] text-slate-500">다음 시험까지</div></div>
+      <div class="w-px bg-slate-200"></div>
+      <div class="text-center"><div id="todayDate" class="font-bold text-sm"></div><div class="text-[11px] text-slate-500">오늘</div></div>
+    </div>
+  </div>
+
+  <!-- tabs -->
+  <div class="mt-6 flex gap-2 overflow-x-auto scroll-hide pb-1">
+    <button onclick="switchTab('calendar')" data-tab="calendar" class="tabBtn whitespace-nowrap px-5 py-2.5 rounded-full font-bold bg-slate-900 text-white">📅 캘린더</button>
+    <button onclick="switchTab('lost')" data-tab="lost" class="tabBtn whitespace-nowrap px-5 py-2.5 rounded-full font-bold bg-white border">🔍 분실물 센터</button>
+    <button onclick="switchTab('reserve')" data-tab="reserve" class="tabBtn whitespace-nowrap px-5 py-2.5 rounded-full font-bold bg-white border">🏫 시설 예약</button>
+    <button onclick="switchTab('mentor')" data-tab="mentor" class="tabBtn whitespace-nowrap px-5 py-2.5 rounded-full font-bold bg-white border">🤝 멘토링 마켓</button>
+    <button onclick="switchTab('class')" data-tab="class" class="tabBtn whitespace-nowrap px-5 py-2.5 rounded-full font-bold bg-white border">👥 내 반</button>
+  </div>
+
+  <!-- TAB: calendar -->
+  <div id="tab-calendar" class="tabPane mt-4 grid lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 bg-white rounded-3xl border p-6">
+      <div class="flex items-center justify-between">
+        <h3 class="font-black text-lg">통합 캘린더</h3>
+        <div class="flex gap-2 text-xs">
+          <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-bold">학사</span>
+          <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded-full font-bold">수행</span>
+          <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full font-bold">시험</span>
+          <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full font-bold">과제</span>
+        </div>
+      </div>
+      <div id="calendarList" class="mt-4 space-y-3 max-h-[520px] overflow-auto pr-1"></div>
+    </div>
+    <div class="bg-white rounded-3xl border p-6">
+      <div id="calTeacherOnly" class="hidden">
+        <h4 class="font-bold">새 일정 등록 <span class="ml-2 px-2 py-1 bg-blue-600 text-white text-xs rounded-full">선생님 전용</span></h4>
+        <p class="text-xs text-slate-500">선생님만 일정을 등록할 수 있습니다. 학생은 조회만 가능합니다.</p>
+        <form onsubmit="addEvent(event)" class="mt-4 space-y-3">
+          <input id="evTitle" placeholder="예: 영어 수행평가" required class="w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none">
+          <input id="evDate" type="date" required class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+          <select id="evCat" class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+            <option value="학사">학사</option><option value="수행">수행평가</option><option value="시험">시험</option><option value="과제">과제</option><option value="개인">개인</option>
+          </select>
+          <button class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold">등록하기</button>
+          <div id="calMsg" class="text-sm text-center"></div>
+        </form>
+      </div>
+      <div id="calStudentNotice" class="text-center py-6">
+        <div class="w-12 h-12 bg-slate-100 rounded-full grid place-items-center mx-auto text-xl">🔒</div>
+        <div class="font-bold mt-3">캘린더는 선생님만 작성 가능</div>
+        <div class="text-xs text-slate-500 mt-1">수행·시험·학사 일정은 담당 선생님이 등록합니다.<br>학생은 일정을 확인하고 D-Day를 체크하세요.</div>
+      </div>
+      <div class="mt-6 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+        <div class="flex items-center justify-between">
+          <div class="text-sm font-bold" id="mealBoxDate">📌 오늘 급식</div>
+          <button onclick="openMealModal()" class="px-3 py-1 bg-white border border-amber-200 rounded-full text-xs font-bold hover:bg-amber-100">급식 보기</button>
+        </div>
+        <div class="text-xs text-slate-700 mt-2 leading-relaxed" id="mealBoxContent">로딩중...</div>
+        <div class="text-xs text-slate-500 mt-1" id="mealBoxKcal"></div>
+        <div class="text-[11px] text-slate-400 mt-1">매일 자동 업데이트 · 출처: 성수고 급식실</div>
+      </div>
+      <div class="mt-3 bg-slate-50 rounded-2xl p-3 text-xs text-slate-600">💡 시험 1주 전에는 담당 선생님이 올려주신 일정을 꼭 확인하세요!</div>
+    </div>
+  </div>
+
+  <!-- TAB: lost -->
+  <div id="tab-lost" class="tabPane hidden mt-4 grid lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+      <div class="bg-white rounded-3xl border p-6">
+        <div class="flex items-center justify-between gap-3">
+          <h3 class="font-black text-lg">분실물 센터</h3>
+          <div class="flex gap-2">
+            <select id="lostFilter" onchange="renderLost()" class="px-3 py-1.5 bg-slate-50 border rounded-full text-sm">
+              <option value="">전체</option><option value="분실물">내가 잃어버린 물건</option><option value="습득물">주인을 찾아요</option>
+            </select>
+          </div>
+        </div>
+        <div id="lostList" class="mt-4 grid sm:grid-cols-2 gap-4"></div>
+      </div>
+    </div>
+    <div class="bg-white rounded-3xl border p-6 h-fit">
+      <h4 class="font-bold">분실물 / 습득물 등록</h4>
+      <p class="text-xs text-slate-500">사진 1장으로 빠르게 등록하세요.</p>
+      <form onsubmit="addLost(event)" class="mt-4 space-y-3">
+        <select id="lostType" class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+          <option value="분실물">분실물 (잃어버렸어요)</option><option value="습득물">습득물 (주인 찾아요)</option>
+        </select>
+        <input id="lostTitle" placeholder="예: 파란색 우산 / 에어팟" required class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+        <input id="lostLoc" placeholder="장소 (예: 2학년 복도)" class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+        <input id="lostDate" type="date" class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+        <textarea id="lostDesc" placeholder="설명 (특징, 연락처 등)" rows="3" class="w-full px-4 py-3 bg-slate-50 border rounded-xl"></textarea>
+        <label class="block">
+          <span class="text-sm font-bold">사진 첨부</span>
+          <input id="lostImg" type="file" accept="image/*" class="mt-1 w-full text-sm">
+        </label>
+        <button class="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold">등록하기</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- TAB: reserve - 선생님이 개방해야 예약 가능 -->
+  <div id="tab-reserve" class="tabPane hidden mt-4 grid lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 bg-white rounded-3xl border p-6">
+      <div class="flex items-center justify-between">
+        <h3 class="font-black text-lg">시설 예약 현황</h3>
+        <span class="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full">선생님 개방 후 예약 가능</span>
+      </div>
+      <p class="text-xs text-slate-500 mt-1">처음에는 비어있는 것이 정상입니다. 시설 담당 선생님이開放하면 그때 예약해서 사용할 수 있습니다.</p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <input id="resDate" type="date" class="px-4 py-2 bg-slate-50 border rounded-full text-sm">
+        <select id="resFacFilter" class="px-4 py-2 bg-slate-50 border rounded-full text-sm">
+          <option value="">전체 시설</option><option value="gym">체육관</option><option value="music">음악실</option><option value="club">동아리실</option><option value="study">스터디룸</option>
+        </select>
+        <button onclick="loadReservations()" class="px-4 py-2 bg-slate-900 text-white rounded-full text-sm font-bold">조회</button>
+      </div>
+      <div id="facilityGrid" class="mt-5 grid sm:grid-cols-2 gap-4"></div>
+      <div id="reserveList" class="mt-6 space-y-2"></div>
+      <div id="openingsList" class="mt-6 space-y-2"></div>
+    </div>
+    <div class="bg-white rounded-3xl border p-6 h-fit">
+      <!-- 선생님 전용: 시설 개방 -->
+      <div id="facilityTeacherBox" class="hidden">
+        <h4 class="font-bold">시설 개방 등록 <span class="ml-1 px-2 py-1 bg-blue-600 text-white text-xs rounded-full">선생님 전용</span></h4>
+        <p class="text-xs text-slate-500">담당 시설을 개방해야 학생들이 예약할 수 있습니다.</p>
+        <form onsubmit="addOpening(event)" class="mt-4 space-y-3">
+          <select id="opFac" required class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+            <option value="">시설 선택</option><option value="gym">🏀 체육관</option><option value="music">🎵 음악실</option><option value="club">🎨 동아리실</option><option value="study">📚 스터디룸</option>
+          </select>
+          <input id="opDate" type="date" required class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+          <select id="opSlot" required class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+            <option value="">시간대 선택</option>
+            <option>08:00-10:00</option><option>10:00-12:00</option><option>13:00-15:00</option><option>15:00-17:00</option>
+          </select>
+          <input id="opNote" placeholder="비고 (예: 농구부 우선)" class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+          <button class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold">개방하기</button>
+          <div id="opMsg" class="text-sm text-center"></div>
+        </form>
+        <div class="mt-4 bg-blue-50 border border-blue-100 rounded-2xl p-3 text-xs">
+          <b>개방 후</b> 학생들이 해당 시간에 예약을 걸 수 있습니다. 예약이 있으면 개방을 취소할 수 없습니다.
+        </div>
+      </div>
+      <!-- 학생/공통: 예약하기 -->
+      <div id="facilityStudentBox">
+        <h4 class="font-bold">예약하기</h4>
+        <p class="text-xs text-slate-500">개방된 시설만 예약 가능합니다.</p>
+        <form onsubmit="addReservation(event)" class="mt-4 space-y-3">
+          <select id="rvFac" required class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+            <option value="">시설 선택</option><option value="gym">🏀 체육관</option><option value="music">🎵 음악실</option><option value="club">🎨 동아리실</option><option value="study">📚 스터디룸</option>
+          </select>
+          <input id="rvDate" type="date" required class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+          <select id="rvSlot" required class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+            <option value="">시간대 선택</option>
+            <option>08:00-10:00</option><option>10:00-12:00</option><option>13:00-15:00</option><option>15:00-17:00</option>
+          </select>
+          <input id="rvPurpose" placeholder="사용 목적 (예: 댄스 연습)" class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+          <button class="w-full py-3 bg-violet-600 text-white rounded-xl font-bold">예약 확정</button>
+          <div id="rvMsg" class="text-sm text-center"></div>
+        </form>
+      </div>
+      <div class="mt-4 bg-violet-50 border border-violet-100 rounded-2xl p-3 text-xs leading-relaxed">
+        <b>예약 규칙</b><br>• 선생님이 개방한 시간만 예약 가능<br>• 1팀 1시간대, 중복 차단<br>• 본인 예약만 취소 가능
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: mentor -->
+  <div id="tab-mentor" class="tabPane hidden mt-4 grid lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 bg-white rounded-3xl border p-6">
+      <div class="flex items-center justify-between">
+        <h3 class="font-black text-lg">멘토링 & 재능마켓</h3>
+        <select id="mentorFilter" onchange="renderMentoring()" class="px-3 py-1.5 bg-slate-50 border rounded-full text-sm">
+          <option value="">전체</option><option>국어</option><option>수학</option><option>영어</option><option>과학</option><option>사회</option><option>정보</option><option>예체능</option>
+        </select>
+      </div>
+      <div id="mentorList" class="mt-4 space-y-3"></div>
+    </div>
+    <div class="bg-white rounded-3xl border p-6 h-fit">
+      <h4 class="font-bold">멘토링 / 재능 나눔 등록</h4>
+      <p class="text-xs text-slate-500">선배가 후배를, 친구가 친구를 돕는 공간.</p>
+      <form onsubmit="addMentoring(event)" class="mt-4 space-y-3">
+        <select id="mtType" class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+          <option value="멘토링">멘토링 (가르쳐요)</option><option value="스터디">스터디 모집</option><option value="재능판매">재능 나눔</option>
+        </select>
+        <input id="mtTitle" placeholder="예: 수학 2등급 → 1등급 노하우 공유" required class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+        <select id="mtSubject" class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+          <option>국어</option><option>수학</option><option>영어</option><option>과학</option><option>사회</option><option>정보</option><option>예체능</option><option>기타</option>
+        </select>
+        <textarea id="mtDesc" placeholder="설명: 시간, 장소, 인원 등" rows="3" class="w-full px-4 py-3 bg-slate-50 border rounded-xl"></textarea>
+        <button class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold">등록하기</button>
+      </form>
+      <div class="mt-4 bg-blue-50 rounded-2xl p-3 text-xs">
+        <b>성수고만의 특별함:</b> 선생님도 멘토로 참여할 수 있어요. ‘정보’ 과목 선생님의 코딩 멘토링 인기 폭발!
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: 내 반 -->
+  <div id="tab-class" class="tabPane hidden mt-4">
+    <!-- class not selected -->
+    <div id="classNotSelected" class="bg-white rounded-3xl border p-8 text-center hidden">
+      <div class="w-14 h-14 bg-blue-100 rounded-full grid place-items-center mx-auto text-2xl">👥</div>
+      <h3 class="font-black text-lg mt-3">내 반을 선택해주세요</h3>
+      <p class="text-sm text-slate-500 mt-1">처음 입장 시 반을 선택하면 같은 반 친구·선생님과 단톡방을 쓸 수 있습니다.</p>
+      <button onclick="openClassSelect()" class="mt-4 px-6 py-3 bg-blue-600 text-white rounded-full font-bold">반 선택하기</button>
+    </div>
+    <!-- class selected -->
+    <div id="classSelected" class="grid lg:grid-cols-12 gap-6">
+      <!-- left: class info + members -->
+      <div class="lg:col-span-3 bg-white rounded-3xl border p-5 h-fit">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-blue-600 text-white grid place-items-center font-black" id="classBadge">3-1</div>
+          <div>
+            <div class="font-black" id="className">3학년 1반</div>
+            <div class="text-xs text-slate-500" id="classCount">0명</div>
+          </div>
+          <span class="ml-auto px-2 py-1 bg-slate-900 text-white text-xs font-bold rounded-full" id="classTeacherBadge">담임</span>
+        </div>
+        <div class="mt-4 flex items-center justify-between bg-amber-50 border border-amber-200 rounded-2xl p-3">
+          <div class="text-sm">
+            <div class="font-bold">일정 알림</div>
+            <div class="text-xs text-slate-600">선생님 일정 즉시 알림</div>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input id="notifyToggle" type="checkbox" class="sr-only peer" onchange="toggleNotify()">
+            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
+        <div class="mt-4">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-sm">우리 반 멤버</h4>
+            <button onclick="loadClassMembers()" class="text-xs text-slate-500">새로고침</button>
+          </div>
+          <div id="classMemberList" class="mt-2 space-y-2 max-h-[320px] overflow-auto pr-1"></div>
+        </div>
+        <div class="mt-4 bg-slate-50 rounded-2xl p-3 text-xs leading-relaxed">
+          <b>담임은 한 반에 한명</b><br>이미 담임이 있는 반은 선택할 수 없습니다.
+        </div>
+      </div>
+      <!-- center: group chat -->
+      <div class="lg:col-span-6 bg-white rounded-3xl border flex flex-col" style="height: 620px;">
+        <div class="p-4 border-b flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-blue-600 text-white grid place-items-center text-sm">💬</div>
+          <div>
+            <div class="font-black text-sm" id="groupChatTitle">단톡방</div>
+            <div class="text-xs text-slate-500">같은 반 전체</div>
+          </div>
+          <div class="ml-auto flex gap-2">
+            <button onclick="openVoteModal()" class="px-3 py-1.5 bg-violet-600 text-white rounded-full text-xs font-bold">📊 투표</button>
+            <button id="scheduleNotifyBtn" onclick="openScheduleNotify()" class="hidden px-3 py-1.5 bg-amber-500 text-white rounded-full text-xs font-bold">📅 일정 알림</button>
+          </div>
+        </div>
+        <div id="groupMessages" class="flex-1 overflow-auto p-4 space-y-3 bg-slate-50"></div>
+        <div class="relative">
+          <div id="emoticonPickerGroup" class="hidden absolute bottom-14 left-3 right-3 bg-white border rounded-2xl p-3 shadow-xl z-10 max-h-[180px] overflow-auto">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold">성수고 이모티콘</span>
+              <button onclick="toggleEmoticonPicker('group')" class="text-xs text-slate-500">✕</button>
+            </div>
+            <div class="grid grid-cols-6 gap-2" id="emoticonGridGroup"></div>
+            <div class="text-[10px] text-slate-400 mt-2 text-center">누가봐도 성수고! 귀여운 12종</div>
+          </div>
+          <form onsubmit="sendGroupMessage(event)" class="p-3 border-t flex gap-2">
+            <button type="button" onclick="toggleEmoticonPicker('group')" class="w-10 h-10 bg-amber-100 border border-amber-200 rounded-full grid place-items-center text-lg hover:bg-amber-200" title="이모티콘">😊</button>
+            <input id="groupInput" placeholder="메시지를 입력하세요" class="flex-1 px-4 py-3 bg-slate-50 border rounded-full outline-none" autocomplete="off">
+            <button class="px-5 py-3 bg-blue-600 text-white rounded-full font-bold">전송</button>
+          </form>
+        </div>
+      </div>
+      <!-- right: private + votes -->
+      <div class="lg:col-span-3 space-y-6">
+        <div class="bg-white rounded-3xl border p-5">
+          <h4 class="font-bold text-sm">개인 채팅</h4>
+          <p class="text-xs text-slate-500">멤버를 선택해 1:1 대화</p>
+          <select id="privateTarget" class="mt-3 w-full px-3 py-2 bg-slate-50 border rounded-xl text-sm">
+            <option value="">상대 선택</option>
+          </select>
+          <div id="privateMessages" class="mt-3 h-[200px] overflow-auto bg-slate-50 rounded-xl p-3 space-y-2">
+            <div class="text-xs text-slate-500 text-center py-8">상대를 선택하면 대화가 표시됩니다.</div>
+          </div>
+          <div class="relative">
+            <div id="emoticonPickerPrivate" class="hidden absolute bottom-12 left-0 right-0 bg-white border rounded-2xl p-3 shadow-xl z-10 max-h-[160px] overflow-auto">
+              <div class="grid grid-cols-6 gap-2" id="emoticonGridPrivate"></div>
+            </div>
+            <form onsubmit="sendPrivateMessage(event)" class="mt-3 flex gap-2">
+              <button type="button" onclick="toggleEmoticonPicker('private')" class="w-8 h-8 bg-amber-100 border border-amber-200 rounded-full grid place-items-center text-sm" title="이모티콘">😊</button>
+              <input id="privateInput" placeholder="개인 메시지" class="flex-1 px-3 py-2 bg-slate-50 border rounded-full text-sm">
+              <button class="px-4 py-2 bg-slate-900 text-white rounded-full text-xs font-bold">전송</button>
+            </form>
+          </div>
+        </div>
+        <div class="bg-white rounded-3xl border p-5">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-sm">진행 중인 투표</h4>
+            <button onclick="loadVotes()" class="text-xs text-slate-500">새로고침</button>
+          </div>
+          <div id="voteList" class="mt-3 space-y-3 max-h-[240px] overflow-auto"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Class Select Modal -->
+<div id="classSelectModal" class="fixed inset-0 hidden z-50">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeClassSelect()"></div>
+  <div class="absolute inset-0 grid place-items-center p-4">
+    <div class="bg-white rounded-[24px] w-full max-w-md p-7 relative">
+      <h3 class="font-black text-lg">내 반 선택</h3>
+      <p class="text-xs text-slate-500 mt-1">한번 선택하면 같은 반 친구들과 단톡방을 쓸 수 있습니다. 선생님은 한 반에 한명만 입장 가능합니다.</p>
+      <div class="mt-5 grid grid-cols-2 gap-3">
+        <select id="selGrade" class="px-4 py-3 bg-slate-50 border rounded-xl">
+          <option value="1">1학년</option><option value="2">2학년</option><option value="3" selected>3학년</option>
+        </select>
+        <select id="selBan" class="px-4 py-3 bg-slate-50 border rounded-xl">
+          <option value="1">1반</option><option value="2">2반</option><option value="3">3반</option><option value="4">4반</option><option value="5">5반</option><option value="6">6반</option><option value="7">7반</option><option value="8">8반</option>
+        </select>
+      </div>
+      <div id="classSelectMsg" class="mt-3 text-sm text-center"></div>
+      <button onclick="confirmClassSelect()" class="mt-4 w-full py-3 bg-blue-600 text-white rounded-xl font-bold">선택하고 입장</button>
+      <p class="text-[11px] text-slate-400 text-center mt-2">담임이 이미 있는 반은 선택할 수 없습니다.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Vote Modal -->
+<div id="voteModal" class="fixed inset-0 hidden z-50">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeVoteModal()"></div>
+  <div class="absolute inset-0 grid place-items-center p-4">
+    <div class="bg-white rounded-[24px] w-full max-w-md p-6 relative">
+      <h3 class="font-black">투표 만들기</h3>
+      <p class="text-xs text-slate-500">반장 투표 등에 유용합니다. 단톡방에 공유됩니다.</p>
+      <form onsubmit="createVote(event)" class="mt-4 space-y-3">
+        <input id="voteTitle" placeholder="투표 제목 (예: 1학기 반장 선거)" required class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+        <input id="voteOpt1" placeholder="선택지 1" required class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+        <input id="voteOpt2" placeholder="선택지 2" required class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+        <input id="voteOpt3" placeholder="선택지 3 (선택)" class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+        <input id="voteOpt4" placeholder="선택지 4 (선택)" class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+        <button class="w-full py-3 bg-violet-600 text-white rounded-xl font-bold">투표 생성</button>
+        <div id="voteMsg" class="text-sm text-center"></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Schedule Notify Modal (teacher) -->
+<div id="scheduleNotifyModal" class="fixed inset-0 hidden z-50">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeScheduleNotify()"></div>
+  <div class="absolute inset-0 grid place-items-center p-4">
+    <div class="bg-white rounded-[24px] w-full max-w-md p-6 relative">
+      <h3 class="font-black">일정 알림 보내기</h3>
+      <p class="text-xs text-slate-500">단톡방에 올리면 알림을 켠 학생 화면에 즉시 뜹니다. (핸드폰 알람처럼)</p>
+      <form onsubmit="sendScheduleNotify(event)" class="mt-4 space-y-3">
+        <input id="schedTitle" placeholder="일정 제목 (예: 수학 수행평가)" required class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+        <input id="schedDate" type="date" required class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+        <select id="schedCat" class="w-full px-4 py-3 bg-slate-50 border rounded-xl">
+          <option value="학사">학사</option><option value="수행">수행</option><option value="시험">시험</option><option value="과제">과제</option>
+        </select>
+        <button class="w-full py-3 bg-amber-500 text-white rounded-xl font-bold">알림 보내기</button>
+        <div id="schedMsg" class="text-sm text-center"></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Profile Modal -->
+<div id="profileModal" class="fixed inset-0 hidden z-50">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeProfile()"></div>
+  <div class="absolute inset-0 grid place-items-center p-4">
+    <div class="bg-white rounded-[24px] w-full max-w-md p-7 relative">
+      <button onclick="closeProfile()" class="absolute right-4 top-4 w-8 h-8 bg-slate-100 rounded-full grid place-items-center">✕</button>
+      <h3 class="font-black text-lg">프로필</h3>
+      <p class="text-xs text-slate-500">프로필 사진은 언제든 변경할 수 있어요. 서버에 안전하게 저장됩니다.</p>
+      <div class="mt-5 flex flex-col items-center">
+        <div class="relative">
+          <img id="profImg" src="" class="w-28 h-28 rounded-full object-cover border-4 border-blue-100 hidden">
+          <div id="profFallback" class="w-28 h-28 rounded-full bg-blue-600 text-white grid place-items-center text-3xl font-black">?</div>
+          <label class="absolute -bottom-1 -right-1 bg-slate-900 text-white w-9 h-9 rounded-full grid place-items-center cursor-pointer shadow">📷
+            <input id="profFile" type="file" accept="image/*" class="hidden" onchange="uploadProfileImg()">
+          </label>
+        </div>
+        <div id="profName" class="mt-3 font-black text-lg"></div>
+        <div id="profSub" class="text-sm text-slate-500"></div>
+        <div class="mt-4 flex gap-2">
+          <button onclick="document.getElementById('profFile').click()" class="px-4 py-2 bg-blue-600 text-white rounded-full text-sm font-bold">사진 변경</button>
+          <button onclick="removeProfileImg()" class="px-4 py-2 bg-white border rounded-full text-sm font-bold">기본으로</button>
+        </div>
+        <div id="profMsg" class="mt-3 text-sm text-green-600"></div>
+      </div>
+      <div class="mt-6 bg-slate-50 rounded-2xl p-4 text-xs">
+        <div class="font-bold">내 정보</div>
+        <div id="profDetail" class="text-slate-600 mt-1 leading-relaxed"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Auth Modal for mobile/header -->
+<div id="authModal" class="fixed inset-0 hidden z-50">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeAuth()"></div>
+  <div class="absolute inset-0 grid place-items-center p-4">
+    <div class="bg-white rounded-[24px] w-full max-w-md p-6 relative max-h-[90vh] overflow-auto">
+      <button onclick="closeAuth()" class="absolute right-4 top-4 w-8 h-8 bg-slate-100 rounded-full grid place-items-center">✕</button>
+      <div class="flex items-center gap-2">
+        <img src="/logo.png" class="w-8 h-8" onerror="this.src='/logo.svg'"><span class="font-black">성수고등학교</span>
+      </div>
+      <div class="mt-4 flex gap-2 p-1 bg-slate-100 rounded-full w-fit">
+        <button id="mTabLogin" onclick="switchAuth('login')" class="px-4 py-1.5 rounded-full font-bold text-sm bg-slate-900 text-white">로그인</button>
+        <button id="mTabReg" onclick="switchAuth('register')" class="px-4 py-1.5 rounded-full font-bold text-sm">회원가입</button>
+      </div>
+      <div class="mt-4" id="modalAuthContainer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Meal Modal -->
+<div id="mealModal" class="fixed inset-0 hidden z-50">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeMealModal()"></div>
+  <div class="absolute inset-0 grid place-items-center p-4">
+    <div class="bg-white rounded-[24px] w-full max-w-lg p-7 relative max-h-[85vh] overflow-auto">
+      <button onclick="closeMealModal()" class="absolute right-4 top-4 w-8 h-8 bg-slate-100 rounded-full grid place-items-center">✕</button>
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-amber-100 grid place-items-center text-xl">🍚</div>
+        <div>
+          <h3 class="font-black text-lg">오늘의 급식</h3>
+          <p class="text-xs text-slate-500" id="mealModalDate">2026-08-27 · 수요일</p>
+        </div>
+        <span class="ml-auto px-3 py-1 bg-slate-900 text-white text-xs font-bold rounded-full" id="mealModalKcal">955.3 Kcal</span>
+      </div>
+      <div class="mt-4 flex gap-2">
+        <input id="mealDatePicker" type="date" class="flex-1 px-4 py-2 bg-slate-50 border rounded-full text-sm">
+        <button onclick="fetchMealForPicker()" class="px-4 py-2 bg-slate-900 text-white rounded-full text-sm font-bold">조회</button>
+        <button onclick="fetchMealForToday()" class="px-3 py-2 bg-amber-100 border border-amber-200 rounded-full text-xs font-bold">오늘</button>
+      </div>
+      <div id="mealModalContent" class="mt-5 space-y-2">
+        <!-- menu items will be inserted here -->
+      </div>
+      <div id="mealModalEmpty" class="hidden mt-6 text-center py-8 bg-slate-50 rounded-2xl">
+        <div class="text-2xl">📭</div>
+        <div class="text-sm font-bold mt-2" id="mealModalEmptyText">주말은 급식이 없습니다.</div>
+      </div>
+      <div class="mt-6 bg-slate-50 rounded-2xl p-3 text-[11px] leading-relaxed text-slate-600">
+        <b>알레르기 정보</b><br>1.난류 2.우유 3.메밀 4.땅콩 5.대두 6.밀 7.고등어 8.게 9.새우 10.돼지고기 11.복숭아 12.토마토 13.아황산류 14.호두 15.닭고기 16.쇠고기 17.오징어 18.조개류<br>
+        <span class="text-slate-400">출처: 성수고등학교 급식실 (매일 자동 업데이트) · <a href="https://seongsu.gwe.hs.kr/sFoodList.do?m=0905&s=seongsu" target="_blank" class="underline">공식 사이트에서 확인</a></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="max-w-7xl mx-auto px-4 py-10 text-center text-xs text-slate-500">
+  <div class="flex justify-center items-center gap-2">
+    <img src="/logo.png" class="w-6 h-6" onerror="this.src='/logo.svg'"><span class="font-bold text-slate-700">성수고등학교</span> · 강원특별자치도 춘천시 중앙로68번길 21 (낙원동)
+  </div>
+  <div class="mt-1">교훈: 믿음·소망·사랑 | 교목: 주목 | 교화: 해바라기 | TEL 033-245-7515</div>
+  <div class="mt-1">© 2026 Seongsu High School (Chuncheon) Portal · 학생·교사 전용 · 서버 저장 안전 시스템</div>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>

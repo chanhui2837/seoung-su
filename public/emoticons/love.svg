@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <circle cx="50" cy="50" r="45" fill="white" stroke="#1e3a8a" stroke-width="3"/>
+  <circle cx="50" cy="50" r="28" fill="#fef3c7" stroke="#1e3a8a" stroke-width="2"/>
+  <g transform="translate(50,18)">
+    <circle r="9" fill="white" stroke="#1e3a8a" stroke-width="1.2"/>
+    <text x="0" y="3" text-anchor="middle" font-size="7" font-weight="900" fill="#1e3a8a" font-family="serif">高</text>
+  </g>
+  <!-- heart eyes -->
+  <text x="36" y="52" text-anchor="middle" font-size="12" fill="#ef4444">♥</text>
+  <text x="64" y="52" text-anchor="middle" font-size="12" fill="#ef4444">♥</text>
+  <!-- smile -->
+  <path d="M42 60 Q50 66 58 60" fill="none" stroke="#1e3a8a" stroke-width="2" stroke-linecap="round"/>
+  <!-- small heart on cheek -->
+  <text x="50" y="70" text-anchor="middle" font-size="8" fill="#ef4444">💝</text>
+  <text x="50" y="88" text-anchor="middle" font-size="7" font-weight="700" fill="#1e3a8a">사랑해</text>
+</svg>

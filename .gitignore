@@ -1,0 +1,16 @@
+node_modules/
+npm-debug.log
+.DS_Store
+.env
+data/*.json
+!data/.gitkeep
+uploads/profiles/*
+uploads/lostfound/*
+!uploads/profiles/.gitkeep
+!uploads/lostfound/.gitkeep
+server.log
+server.err
+temp_*.png
+
+token_*.txt
+body*.json

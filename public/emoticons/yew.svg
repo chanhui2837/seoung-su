@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <circle cx="50" cy="50" r="45" fill="white" stroke="#1e3a8a" stroke-width="3"/>
+  <!-- yew tree (주목) -->
+  <g transform="translate(50,52)">
+    <!-- trunk -->
+    <rect x="-4" y="10" width="8" height="14" fill="#92400e" stroke="#1e3a8a" stroke-width="1.2"/>
+    <!-- foliage layers -->
+    <polygon points="0,-28 12,-12 8,-12 14,2 6,2 10,15 -10,15 -6,2 -14,2 -8,-12 -12,-12" fill="#166534" stroke="#1e3a8a" stroke-width="1.5" stroke-linejoin="round"/>
+    <polygon points="0,-22 8,-8 5,-8 9,4 4,4 6,12 -6,12 -4,4 -9,4 -5,-8 -8,-8" fill="#15803d" stroke="#1e3a8a" stroke-width="1" stroke-linejoin="round"/>
+    <!-- face on trunk -->
+    <circle cx="-2" cy="6" r="1" fill="white"/><circle cx="2" cy="6" r="1" fill="white"/>
+    <circle cx="-2" cy="6" r="0.5" fill="#1e3a8a"/><circle cx="2" cy="6" r="0.5" fill="#1e3a8a"/>
+  </g>
+  <g transform="translate(50,18)">
+    <circle r="9" fill="white" stroke="#1e3a8a" stroke-width="1.2"/>
+    <text x="0" y="3" text-anchor="middle" font-size="7" font-weight="900" fill="#1e3a8a" font-family="serif">高</text>
+  </g>
+  <text x="50" y="88" text-anchor="middle" font-size="7" font-weight="700" fill="#1e3a8a">주목</text>
+</svg>

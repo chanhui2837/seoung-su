@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <circle cx="50" cy="50" r="45" fill="white" stroke="#1e3a8a" stroke-width="3"/>
+  <circle cx="50" cy="46" r="26" fill="#fef3c7" stroke="#1e3a8a" stroke-width="2"/>
+  <g transform="translate(50,16)">
+    <circle r="9" fill="#1e3a8a"/>
+    <text x="0" y="3" text-anchor="middle" font-size="7" font-weight="900" fill="white" font-family="serif">高</text>
+  </g>
+  <!-- praying eyes closed with lashes -->
+  <path d="M34 42 Q38 38 42 42" fill="none" stroke="#1e3a8a" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M58 42 Q62 38 66 42" fill="none" stroke="#1e3a8a" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M32 43 L34 46 M40 43 L42 46 M58 43 L60 46 M66 43 L68 46" stroke="#1e3a8a" stroke-width="1" stroke-linecap="round"/>
+  <!-- praying hands -->
+  <g transform="translate(50,62)">
+    <ellipse cx="-6" cy="0" rx="6" ry="8" fill="#fef3c7" stroke="#1e3a8a" stroke-width="1.2"/>
+    <ellipse cx="6" cy="0" rx="6" ry="8" fill="#fef3c7" stroke="#1e3a8a" stroke-width="1.2"/>
+    <line x1="0" y1="-6" x2="0" y2="6" stroke="#1e3a8a" stroke-width="1"/>
+  </g>
+  <text x="50" y="88" text-anchor="middle" font-size="7" font-weight="700" fill="#1e3a8a">믿음</text>
+</svg>
