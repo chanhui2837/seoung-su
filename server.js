@@ -10,8 +10,9 @@ const { v4: uuidv4 } = require('uuid');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'seongsu-high-secret-2026';
-const DATA_DIR = path.join(__dirname, 'data');
-const UPLOAD_DIR = path.join(__dirname, 'uploads');
+// Render 등 배포 환경에서는 DATA_DIR/UPLOAD_DIR을 환경변수로 지정해 영구 디스크에 저장
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, 'uploads');
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(path.join(UPLOAD_DIR, 'profiles'))) fs.mkdirSync(path.join(UPLOAD_DIR, 'profiles'), { recursive: true });
