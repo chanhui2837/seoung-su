@@ -521,8 +521,8 @@ app.post('/api/class/notifications/read', auth, async (req,res)=>{
   const idArr = Array.isArray(ids) ? ids : [ids].filter(Boolean);
   let changed = 0;
   if(idArr.length===0){
-    const res = await ClassNotification.updateMany({ forUserId: req.user.id }, { read: true });
-    changed = res.modifiedCount;
+    const r = await ClassNotification.updateMany({ forUserId: req.user.id }, { read: true });
+    changed = r.modifiedCount;
   } else {
     for (const id of idArr) {
       const n = await ClassNotification.findOne({ id, forUserId: req.user.id, read: false });
