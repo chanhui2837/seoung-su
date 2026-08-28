@@ -719,6 +719,19 @@ app.post('/api/class/private-messages', auth, (req,res)=>{
   res.json(msg);
 });
 
+// 내게 온 개인 메시지 전체 (알림용) - 같은 반에서 나에게 온 모든 1:1 메시지
+app.get('/api/class/private-inbox', auth, (req,res)=>{
+  const users = loadDB(DB_FILES.users);
+  const me = users.find(u=>u.id===req.user.id);
+  if(!me || !me.classId) return res.status(400).json({ error: '반을 먼저 선택해주세요.' });
+  let list = loadDB(DB_FILES.classPrivateMessages).filter(m=> m.toId===me.id || m.fromId===me.id);
+  // 최근 50개만, 최신순
+  list.sort((a,b)=> new Date(b.createdAt)-new Date(a.createdAt));
+  list = list.slice(0,50);
+  // 읽음 처리는 별도로 하지 않고, 클라이언트가 폴링으로 새 메시지를 감지
+  res.json(list);
+});
+
 // 투표 생성 (단톡방에서)
 app.post('/api/class/votes', auth, (req,res)=>{
   const users = loadDB(DB_FILES.users);

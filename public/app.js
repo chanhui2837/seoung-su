@@ -952,9 +952,65 @@ async function toggleNotify(){
     }
   }
 }
+let lastPrivateIds = new Set();
+async function checkPrivateInbox(){
+  if(!me || !me.classId) return;
+  try{
+    const r = await fetch('/api/class/private-inbox', {headers: headers()});
+    const list = await r.json();
+    if(!Array.isArray(list)) return;
+    // find new messages where toId === me.id
+    const news = list.filter(m=> m.toId===me.id && !lastPrivateIds.has(m.id));
+    // update set
+    list.forEach(m=> lastPrivateIds.add(m.id));
+    // keep only last 50
+    if(lastPrivateIds.size>50){
+      const arr = Array.from(lastPrivateIds).slice(-50);
+      lastPrivateIds = new Set(arr);
+    }
+    if(news.length===0) return;
+    // if currently viewing private chat with that sender, reload
+    const currentWith = document.getElementById('privateTarget')?.value;
+    let needReload = false;
+    news.forEach(m=>{
+      if(currentWith && (m.fromId===currentWith || m.toId===currentWith)) needReload = true;
+      // show toast
+      const sender = m.fromName;
+      showPrivateToast(m, sender);
+    });
+    if(needReload) loadPrivateMessages();
+  }catch(e){}
+}
+function showPrivateToast(m, sender){
+  let container = document.getElementById('toastContainer');
+  if(!container){
+    container = document.createElement('div');
+    container.id='toastContainer';
+    container.className='fixed top-20 right-4 z-50 space-y-2';
+    document.body.appendChild(container);
+  }
+  const isEmo = m.type==='emoticon' && m.emoticonId;
+  const emo = isEmo ? emoticons.find(e=>e.id===m.emoticonId) : null;
+  const preview = isEmo ? `이모티콘: ${emo?emo.name:m.emoticonId}` : (m.text.length>20? m.text.slice(0,20)+'...': m.text);
+  const el = document.createElement('div');
+  el.className='bg-violet-600 text-white rounded-2xl p-4 shadow-xl w-80 cursor-pointer';
+  el.onclick = ()=>{ el.remove(); switchTab('class'); setTimeout(()=>{ selectPrivateTarget(m.fromId, sender); }, 300); };
+  el.innerHTML = `<div class="flex items-start gap-3">
+    <div class="w-8 h-8 rounded-full bg-white text-violet-600 grid place-items-center text-sm">💬</div>
+    <div class="flex-1">
+      <div class="font-bold text-sm">${sender}님의 개인 메시지</div>
+      <div class="text-xs text-violet-100 mt-1">${isEmo ? `<img src="/emoticons/${emo.file}" class="w-8 h-8 inline-block"> ` : ''}${preview}</div>
+      <div class="text-xs text-violet-200 mt-1">클릭하면 대화로 이동</div>
+    </div>
+    <button onclick="event.stopPropagation(); this.closest('.bg-violet-600').remove()" class="text-violet-200">✕</button>
+  </div>`;
+  container.appendChild(el);
+  setTimeout(()=> el.remove(), 8000);
+  if(navigator.vibrate) navigator.vibrate(150);
+}
 function startClassPolling(){
   if(classPollInterval) clearInterval(classPollInterval);
-  // poll group, votes, notifications every 3s
+  // poll group, votes, notifications, private every 3s
   classPollInterval = setInterval(()=>{
     if(!me || !me.classId) return;
     const activeTab = document.querySelector('.tabBtn.bg-slate-900');
@@ -962,11 +1018,24 @@ function startClassPolling(){
     if(isClassTab){
       loadGroupMessages();
       loadVotes();
+      // if private target selected, also poll private messages
+      const withId = document.getElementById('privateTarget')?.value;
+      if(withId) loadPrivateMessages();
     }
     loadNotifications();
+    checkPrivateInbox();
   }, 3000);
   // immediate
   loadNotifications();
+  checkPrivateInbox();
+  // init private ids
+  (async()=>{
+    try{
+      const r = await fetch('/api/class/private-inbox', {headers: headers()});
+      const list = await r.json();
+      if(Array.isArray(list)) list.forEach(m=> lastPrivateIds.add(m.id));
+    }catch{}
+  })();
 }
 // hook into afterLogin and switchTab
 const _afterLoginOrig = afterLogin;
