@@ -890,7 +890,7 @@ async function sendScheduleNotify(e){
   msgEl.textContent='전송 중...';
   const r = await fetch('/api/class/schedule-notify', {method:'POST', headers: headers(), body: JSON.stringify({title, date, category})});
   const j = await r.json();
-  if(r.ok){ msgEl.textContent=`전송 완료! ${j.notified}명에게 알림`; closeScheduleNotify(); loadCalendar(); loadGroupMessages(); e.target.reset(); setTimeout(()=>msgEl.textContent='',2000); }
+  if(r.ok){ msgEl.textContent=`전송 완료! ${j.notified}명에게 알림 (전체 캘린더에는 미등록)`; closeScheduleNotify(); loadGroupMessages(); e.target.reset(); setTimeout(()=>msgEl.textContent='',2000); }
   else { msgEl.textContent=j.error; msgEl.className='text-sm text-red-600 text-center'; }
 }
 // Notifications (alarm like)

@@ -572,7 +572,7 @@ app.post('/api/class/group-messages', auth, (req,res)=>{
   res.json(msg);
 });
 
-// 선생님이 일정 알림을 단톡에 올리고, 학생들에게 즉시 알림
+// 선생님이 일정 알림을 단톡에 올리고, 학생들에게 즉시 알림 (전체 캘린더와 분리 - 반 전용)
 app.post('/api/class/schedule-notify', auth, (req,res)=>{
   const users = loadDB(DB_FILES.users);
   const me = users.find(u=>u.id===req.user.id);
@@ -580,11 +580,9 @@ app.post('/api/class/schedule-notify', auth, (req,res)=>{
   if(me.role!=='teacher') return res.status(403).json({ error: '담임선생님만 일정 알림을 보낼 수 있습니다.' });
   const { title, date, category } = req.body;
   if(!title || !date) return res.status(400).json({ error: '제목과 날짜 필수' });
-  // 1) 캘린더에도 등록 (선생님 전용)
-  const events = loadDB(DB_FILES.events);
-  const ev = { id: uuidv4(), title, date, category: category||'학사', author: me.name, authorId: me.id, color: category==='시험'?'red':category==='수행'?'orange':category==='과제'?'green':'blue' };
-  events.push(ev);
-  saveDB(DB_FILES.events, events);
+  // 1) 반 전용 일정 생성 (전체 캘린더와 분리 - class_schedules에 저장하지 않고 단톡과 알림으로만 처리)
+  const ev = { id: uuidv4(), title, date, category: category||'학사', author: me.name, authorId: me.id, classId: me.classId, color: category==='시험'?'red':category==='수행'?'orange':category==='과제'?'green':'blue' };
+  // 전체 캘린더(events.json)에는 저장하지 않음 - 분리
   // 2) 단톡에 일정 메시지
   const groupList = loadDB(DB_FILES.classGroupMessages);
   const scheduleMsg = {
