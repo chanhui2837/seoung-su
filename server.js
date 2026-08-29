@@ -179,20 +179,29 @@ function safeUser(u) {
 app.post('/api/register', async (req, res) => {
   const { name, role, studentId, subject, password, email } = req.body;
   if (!name || !password) return res.status(400).json({ error: '이름과 비밀번호는 필수입니다.' });
+  const tName = String(name).trim();
+  if (tName.length < 2 || tName.length > 20) return res.status(400).json({ error: '이름은 2~20자여야 합니다.' });
+  if (tName === 'undefined' || tName === 'null' || tName.toLowerCase() === 'null') return res.status(400).json({ error: '올바른 이름을 입력해주세요.' });
+  if (String(password).length < 4) return res.status(400).json({ error: '비밀번호는 4자 이상이어야 합니다.' });
   if (role === 'teacher') {
     if (!subject) return res.status(400).json({ error: '담당과목을 선택해주세요.' });
   } else {
     if (!studentId) return res.status(400).json({ error: '학번을 입력해주세요.' });
+    const sidStr = String(studentId).trim();
+    if (sidStr === 'undefined' || sidStr === 'null' || !/^\d{5}$/.test(sidStr)) return res.status(400).json({ error: '학번은 5자리 숫자여야 합니다. (예: 30101)' });
   }
   let normEmail = null;
   if (email) {
-    normEmail = String(email).trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normEmail)) return res.status(400).json({ error: '올바른 이메일 형식을 입력해주세요.' });
+    const raw = String(email).trim();
+    if (raw) {
+      normEmail = raw.toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normEmail)) return res.status(400).json({ error: '올바른 이메일 형식을 입력해주세요.' });
+    }
   }
   const users = await User.find();
   const exists = users.find(u => {
-    if (role === 'teacher') return u.role === 'teacher' && u.name === name && u.subject === subject;
-    return u.role !== 'teacher' && u.studentId === String(studentId);
+    if (role === 'teacher') return u.role === 'teacher' && u.name === tName && u.subject === subject;
+    return u.role !== 'teacher' && u.studentId === String(studentId).trim();
   });
   if (exists) return res.status(400).json({ error: '이미 가입된 정보입니다.' });
   if (normEmail) {
@@ -200,13 +209,13 @@ app.post('/api/register', async (req, res) => {
     if (emailDup) return res.status(400).json({ error: '이미 사용 중인 이메일입니다.' });
   }
 
-  const hash = await bcrypt.hash(password, 10);
+  const hash = await bcrypt.hash(String(password), 10);
   const newUser = await User.create({
     id: uuidv4(),
-    name: name.trim(),
+    name: tName,
     role: role === 'teacher' ? 'teacher' : 'student',
-    studentId: role === 'teacher' ? null : String(studentId),
-    subject: role === 'teacher' ? subject : null,
+    studentId: role === 'teacher' ? null : String(studentId).trim(),
+    subject: role === 'teacher' ? String(subject).trim() : null,
     passwordHash: hash,
     profileImage: null,
     createdAt: new Date().toISOString(),
@@ -313,13 +322,36 @@ app.put('/api/profile', auth, async (req, res) => {
   res.json({ user: safeUser(me), token: newToken });
 });
 
+// helper: corrupted user check (name/studentId/subject missing or literal "undefined"/"null")
+function isCorruptedUser(u){
+  if (!u.name || String(u.name).trim() === '' || u.name === 'undefined' || u.name === 'null') return true;
+  if (u.role === 'teacher') {
+    if (!u.subject || String(u.subject).trim() === '' || u.subject === 'undefined' || u.subject === 'null') return true;
+  } else {
+    if (!u.studentId || String(u.studentId).trim() === '' || u.studentId === 'undefined' || u.studentId === 'null' || !/^\d{5}$/.test(String(u.studentId).trim())) return true;
+  }
+  return false;
+}
+
 // --- API: Account find by email ---
 app.post('/api/account/find', async (req, res) => {
   const { email } = req.body;
   if (!email || !String(email).trim()) return res.status(400).json({ error: '이메일을 입력해주세요.' });
   const norm = String(email).trim().toLowerCase();
-  const users = await User.find({ email: norm });
+  let users = await User.find({ email: norm });
   if (!users || users.length === 0) return res.status(404).json({ error: '해당 이메일로 가입된 계정을 찾을 수 없습니다.' });
+  // corrupted accounts are hidden and auto-cleaned
+  const corrupted = users.filter(u => isCorruptedUser(u));
+  if (corrupted.length > 0) {
+    // auto delete corrupted accounts for hygiene
+    for (const cu of corrupted) {
+      try { await User.deleteOne({ id: cu.id }); } catch(e){}
+    }
+    users = users.filter(u => !isCorruptedUser(u));
+    if (users.length === 0) {
+      return res.status(404).json({ error: '해당 이메일로 유효한 계정을 찾을 수 없습니다. 오류 계정은 자동 정리되었습니다. 다시 가입해주세요.' });
+    }
+  }
   // 비밀번호는 bcrypt로 복원 불가하므로 아이디 정보만 반환
   const result = users.map(u => ({
     name: u.name,
@@ -331,6 +363,23 @@ app.post('/api/account/find', async (req, res) => {
     id: u.id
   }));
   res.json({ users: result });
+});
+
+// --- API: Cleanup corrupted accounts for email (no auth, email ownership implied) ---
+app.post('/api/account/cleanup', async (req, res) => {
+  const { email } = req.body;
+  if (!email || !String(email).trim()) return res.status(400).json({ error: '이메일을 입력해주세요.' });
+  const norm = String(email).trim().toLowerCase();
+  const users = await User.find({ email: norm });
+  if (!users || users.length === 0) return res.json({ ok: true, cleaned: 0, message: '정리할 계정이 없습니다.' });
+  let cleaned = 0;
+  for (const u of users) {
+    if (isCorruptedUser(u)) {
+      await User.deleteOne({ id: u.id });
+      cleaned++;
+    }
+  }
+  res.json({ ok: true, cleaned, message: cleaned > 0 ? `${cleaned}개의 오류 계정을 정리했습니다.` : '오류 계정이 없습니다. 정상 계정은 유지됩니다.' });
 });
 
 // --- API: Reset password via email ---

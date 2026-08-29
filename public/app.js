@@ -353,14 +353,17 @@ async function findAccount(){
     _foundEmail = email;
     msgEl.textContent=''; msgEl.className='text-sm text-center';
     resultEl.classList.remove('hidden');
-    // show users found (아이디 정보)
+    // show users found (아이디 정보) - robust fallback for corrupted data
     resultEl.innerHTML = '<div class="bg-slate-50 border rounded-2xl p-4 space-y-2"><div class="font-bold text-sm">찾은 계정 ('+j.users.length+'개)</div>' + j.users.map(u=>{
       const isTeacher = u.role==='teacher';
-      const idLine = isTeacher ? '이름: <b>'+u.name+'</b> / 과목: <b>'+u.subject+'</b> (선생님)' : '이름: <b>'+u.name+'</b> / 학번: <b>'+u.studentId+'</b> (학생)';
-      const emailLine = '이메일: '+u.email;
-      const created = '가입일: '+fmtDate(u.createdAt);
+      const safeName = (u.name && u.name !== 'undefined' && u.name !== 'null') ? u.name : '이름없음';
+      const safeSub = (u.subject && u.subject !== 'undefined') ? u.subject : '미정';
+      const safeSid = (u.studentId && u.studentId !== 'undefined' && u.studentId !== 'null' && /^\d{5}$/.test(String(u.studentId))) ? u.studentId : '미등록';
+      const idLine = isTeacher ? '이름: <b>'+safeName+'</b> / 과목: <b>'+safeSub+'</b> (선생님)' : '이름: <b>'+safeName+'</b> / 학번: <b>'+safeSid+'</b> (학생)';
+      const emailLine = '이메일: '+(u.email||'-');
+      const created = '가입일: '+(u.createdAt ? fmtDate(u.createdAt) : '알수없음');
       return '<div class="bg-white border rounded-xl p-3 text-sm">'+idLine+'<br><span class="text-xs text-slate-500">'+emailLine+' · '+created+'</span></div>';
-    }).join('') + '<p class="text-xs text-amber-600 mt-2">⚠️ 비밀번호는 암호화되어 표시할 수 없습니다. 아래에서 새 비밀번호로 재설정하세요.</p></div>';
+    }).join('') + '<p class="text-xs text-amber-600 mt-2">⚠️ 비밀번호는 암호화되어 표시할 수 없습니다. 아래에서 새 비밀번호로 재설정하세요.</p><button onclick="cleanupCorrupted()" class="mt-2 w-full py-2 bg-white border border-amber-200 rounded-xl text-xs font-bold text-amber-700 hover:bg-amber-50">오류 계정이 보이면 정리하기 (내 이메일의 잘못된 계정 삭제)</button></div>';
     // prefill reset form with first found user's info
     if(j.users.length>0){
       const first = j.users[0];
@@ -375,8 +378,32 @@ async function findAccount(){
     }
     resetArea.classList.remove('hidden');
   }catch(err){
-    msgEl.textContent=err.message; msgEl.className='text-sm text-center text-red-600';
+    // auto-cleaned case shows as info (green)
+    const isCleaned = String(err.message).includes('자동 정리') || String(err.message).includes('정리');
+    msgEl.textContent=err.message;
+    msgEl.className= isCleaned ? 'text-sm text-center text-green-600' : 'text-sm text-center text-red-600';
+    // if cleaned, also offer to re-search
+    if(isCleaned){
+      resultEl.classList.add('hidden');
+      resetArea.classList.add('hidden');
+    }
   }
+}
+async function cleanupCorrupted(){
+  const email = document.getElementById('findEmail').value.trim() || _foundEmail;
+  if(!email) return alert('이메일을 먼저 입력해주세요.');
+  if(!confirm(email + ' 로 등록된 오류 계정을 정리할까요? 정상 계정은 유지됩니다.')) return;
+  const msgEl = document.getElementById('findMsg');
+  msgEl.textContent='정리 중...'; msgEl.className='text-sm text-center text-slate-500';
+  try{
+    const r = await fetch('/api/account/cleanup', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email})});
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error);
+    msgEl.textContent = '✅ ' + j.message;
+    msgEl.className='text-sm text-center text-green-600';
+    document.getElementById('findResult').classList.add('hidden');
+    document.getElementById('resetArea').classList.add('hidden');
+  }catch(e){ msgEl.textContent=e.message; msgEl.className='text-sm text-center text-red-600'; }
 }
 async function resetPassword(){
   const email = _foundEmail || document.getElementById('findEmail').value.trim();
@@ -1112,28 +1139,56 @@ async function toggleNotify(){
   }
 }
 let lastPrivateIds = new Set();
+function getPrivateSeenKey(){ return me && me.id ? `seongsu_private_seen_${me.id}` : null; }
+function loadPrivateSeen(){
+  try{
+    const key = getPrivateSeenKey();
+    if(!key) return;
+    const raw = localStorage.getItem(key);
+    if(raw){
+      const arr = JSON.parse(raw);
+      if(Array.isArray(arr)) lastPrivateIds = new Set(arr);
+    }
+  }catch(e){}
+}
+function savePrivateSeen(){
+  try{
+    const key = getPrivateSeenKey();
+    if(!key) return;
+    const arr = Array.from(lastPrivateIds).slice(-100);
+    localStorage.setItem(key, JSON.stringify(arr));
+  }catch(e){}
+}
+function markPrivateSeen(id){
+  if(!id) return;
+  lastPrivateIds.add(id);
+  if(lastPrivateIds.size>100){
+    const arr = Array.from(lastPrivateIds).slice(-100);
+    lastPrivateIds = new Set(arr);
+  }
+  savePrivateSeen();
+}
+function dismissPrivateToast(id, btn){
+  markPrivateSeen(id);
+  const toast = btn.closest('.bg-violet-600');
+  if(toast) toast.remove();
+}
 async function checkPrivateInbox(){
   if(!me || !me.classId) return;
   try{
     const r = await fetch('/api/class/private-inbox', {headers: headers()});
     const list = await r.json();
     if(!Array.isArray(list)) return;
-    // find new messages where toId === me.id
+    // find new messages where toId === me.id and not yet seen (persistent)
     const news = list.filter(m=> m.toId===me.id && !lastPrivateIds.has(m.id));
-    // update set
-    list.forEach(m=> lastPrivateIds.add(m.id));
-    // keep only last 50
-    if(lastPrivateIds.size>50){
-      const arr = Array.from(lastPrivateIds).slice(-50);
-      lastPrivateIds = new Set(arr);
-    }
+    // update set and persist (mark all fetched as seen to avoid future duplicates)
+    list.forEach(m=> markPrivateSeen(m.id));
     if(news.length===0) return;
     // if currently viewing private chat with that sender, reload
     const currentWith = document.getElementById('privateTarget')?.value;
     let needReload = false;
     news.forEach(m=>{
       if(currentWith && (m.fromId===currentWith || m.toId===currentWith)) needReload = true;
-      // show toast
       const sender = m.fromName;
       showPrivateToast(m, sender);
     });
@@ -1150,10 +1205,10 @@ function showPrivateToast(m, sender){
   }
   const isEmo = m.type==='emoticon' && m.emoticonId;
   const emo = isEmo ? emoticons.find(e=>e.id===m.emoticonId) : null;
-  const preview = isEmo ? `이모티콘: ${emo?emo.name:m.emoticonId}` : (m.text.length>20? m.text.slice(0,20)+'...': m.text);
+  const preview = isEmo ? `이모티콘: ${emo?emo.name:m.emoticonId}` : (m.text && m.text.length>20? m.text.slice(0,20)+'...': (m.text||''));
   const el = document.createElement('div');
   el.className='bg-violet-600 text-white rounded-2xl p-4 shadow-xl w-80 cursor-pointer';
-  el.onclick = ()=>{ el.remove(); switchTab('class'); setTimeout(()=>{ selectPrivateTarget(m.fromId, sender); }, 300); };
+  el.onclick = ()=>{ markPrivateSeen(m.id); el.remove(); switchTab('class'); setTimeout(()=>{ selectPrivateTarget(m.fromId, sender); }, 300); };
   el.innerHTML = `<div class="flex items-start gap-3">
     <div class="w-8 h-8 rounded-full bg-white text-violet-600 grid place-items-center text-sm">💬</div>
     <div class="flex-1">
@@ -1161,14 +1216,26 @@ function showPrivateToast(m, sender){
       <div class="text-xs text-violet-100 mt-1">${isEmo ? `<img src="/emoticons/${emo.file}" class="w-8 h-8 inline-block"> ` : ''}${preview}</div>
       <div class="text-xs text-violet-200 mt-1">클릭하면 대화로 이동</div>
     </div>
-    <button onclick="event.stopPropagation(); this.closest('.bg-violet-600').remove()" class="text-violet-200">✕</button>
+    <button onclick="event.stopPropagation(); dismissPrivateToast('${m.id}', this)" class="text-violet-200">✕</button>
   </div>`;
   container.appendChild(el);
-  setTimeout(()=> el.remove(), 8000);
+  setTimeout(()=> { if(el.parentNode) el.remove(); }, 8000);
   if(navigator.vibrate) navigator.vibrate(150);
 }
-function startClassPolling(){
+async function startClassPolling(){
   if(classPollInterval) clearInterval(classPollInterval);
+  // load seen from localStorage first
+  loadPrivateSeen();
+  // initial population: fetch inbox and mark all as seen WITHOUT showing toast (to avoid old messages appearing on reload)
+  try{
+    const r = await fetch('/api/class/private-inbox', {headers: headers()});
+    const list = await r.json();
+    if(Array.isArray(list)){
+      // if first time (no stored data), just mark all as seen silently
+      // if already have stored data, only add new ones that are not yet seen (but not toast)
+      list.forEach(m=> markPrivateSeen(m.id));
+    }
+  }catch(e){}
   // poll group, votes, notifications, private every 3s
   classPollInterval = setInterval(()=>{
     if(!me || !me.classId) return;
@@ -1177,24 +1244,14 @@ function startClassPolling(){
     if(isClassTab){
       loadGroupMessages();
       loadVotes();
-      // if private target selected, also poll private messages
       const withId = document.getElementById('privateTarget')?.value;
       if(withId) loadPrivateMessages();
     }
     loadNotifications();
     checkPrivateInbox();
   }, 3000);
-  // immediate
+  // immediate notification check (private already handled via initial population)
   loadNotifications();
-  checkPrivateInbox();
-  // init private ids
-  (async()=>{
-    try{
-      const r = await fetch('/api/class/private-inbox', {headers: headers()});
-      const list = await r.json();
-      if(Array.isArray(list)) list.forEach(m=> lastPrivateIds.add(m.id));
-    }catch{}
-  })();
 }
 // hook into afterLogin and switchTab
 const _afterLoginOrig = afterLogin;
