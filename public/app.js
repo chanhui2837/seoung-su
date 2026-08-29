@@ -74,9 +74,28 @@ function afterLogin(){
   const pFb = document.getElementById('profFallback');
   if(me.profileImage){ pImg.src = me.profileImage; pImg.classList.remove('hidden'); pFb.classList.add('hidden'); }
   else { pImg.classList.add('hidden'); pFb.classList.remove('hidden'); pFb.textContent = me.name[0]; }
+  const emailDisplay = me.email ? me.email : '<span class="text-slate-400">미등록</span>';
   document.getElementById('profDetail').innerHTML = me.role==='teacher'
-    ? `이름: <b>${me.name}</b><br>담당과목: <b>${me.subject}</b><br>가입일: ${fmtDate(me.createdAt)}`
-    : `이름: <b>${me.name}</b><br>학번: <b>${me.studentId}</b><br>가입일: ${fmtDate(me.createdAt)}`;
+    ? `이름: <b>${me.name}</b><br>담당과목: <b>${me.subject}</b><br>이메일: <b>${emailDisplay}</b><br>가입일: ${fmtDate(me.createdAt)}`
+    : `이름: <b>${me.name}</b><br>학번: <b>${me.studentId}</b><br>이메일: <b>${emailDisplay}</b><br>가입일: ${fmtDate(me.createdAt)}`;
+  // fill profile edit form
+  const editName = document.getElementById('profEditName');
+  const editSid = document.getElementById('profEditStudentId');
+  const editSubWrap = document.getElementById('profEditSubjectWrap');
+  const editSub = document.getElementById('profEditSubject');
+  const editEmail = document.getElementById('profEditEmail');
+  if(editName) editName.value = me.name || '';
+  if(editEmail) editEmail.value = me.email || '';
+  if(me.role==='teacher'){
+    if(editSid) editSid.classList.add('hidden');
+    if(editSubWrap) editSubWrap.classList.remove('hidden');
+    if(editSub) editSub.value = me.subject || '';
+  } else {
+    if(editSid) { editSid.classList.remove('hidden'); editSid.value = me.studentId || ''; }
+    if(editSubWrap) editSubWrap.classList.add('hidden');
+  }
+  const editMsg = document.getElementById('profEditMsg');
+  if(editMsg) editMsg.textContent='';
   // refresh data with auth
   loadCalendar(); loadLost(); loadReservations(); loadMentoring();
   updateRoleUI();
@@ -148,6 +167,7 @@ function openAuth(which){
       <div id="mLoginSubWrap" class="hidden"><select id="mLoginSub" class="w-full px-4 py-3.5 bg-slate-50 border rounded-2xl"><option value="">담당과목 선택</option><option>국어</option><option>수학</option><option>영어</option><option>과학</option><option>사회</option><option>체육</option><option>음악</option><option>미술</option><option>정보</option><option>기타</option></select></div>
       <input id="mLoginPw" type="password" placeholder="비밀번호" required class="w-full px-4 py-3.5 bg-slate-50 border rounded-2xl">
       <button class="w-full py-3.5 bg-blue-600 text-white rounded-2xl font-black">로그인하기 →</button>
+      <button type="button" onclick="openAccountFind()" class="w-full text-xs text-slate-500 underline">계정을 잊으셨나요? 계정 찾기 →</button>
       <div id="mLoginMsg" class="text-sm text-red-600 text-center"></div>
     </form>
     <form onsubmit="handleRegister(event, true)" class="space-y-3 ${which!=='register'?'hidden':''}" id="mFormReg">
@@ -158,6 +178,7 @@ function openAuth(which){
       <input id="mRegName" placeholder="이름" required class="w-full px-4 py-3.5 bg-slate-50 border rounded-2xl">
       <input id="mRegSid" placeholder="학번 5자리" class="w-full px-4 py-3.5 bg-slate-50 border rounded-2xl">
       <div id="mRegSubWrap" class="hidden"><select id="mRegSub" class="w-full px-4 py-3.5 bg-slate-50 border rounded-2xl"><option value="">담당과목 선택</option><option>국어</option><option>수학</option><option>영어</option><option>과학</option><option>사회</option><option>체육</option><option>음악</option><option>미술</option><option>정보</option><option>기타</option></select></div>
+      <input id="mRegEmail" type="email" placeholder="이메일 (계정 찾기용)" class="w-full px-4 py-3.5 bg-slate-50 border rounded-2xl">
       <input id="mRegPw" type="password" placeholder="비밀번호" required class="w-full px-4 py-3.5 bg-slate-50 border rounded-2xl">
       <input id="mRegPw2" type="password" placeholder="비밀번호 확인" required class="w-full px-4 py-3.5 bg-slate-50 border rounded-2xl">
       <button class="w-full py-3.5 bg-slate-900 text-white rounded-2xl font-black">가입하고 시작하기</button>
@@ -220,19 +241,19 @@ async function handleLogin(e, isModal=false){
 async function handleRegister(e, isModal=false){
   e.preventDefault();
   const get = (id)=> document.getElementById(id).value.trim();
-  let name, role, studentId, subject, pw, pw2;
+  let name, role, studentId, subject, pw, pw2, email;
   if(isModal){
     name = get('mRegName'); role = document.querySelector('input[name="mRegRole"]:checked').value;
-    studentId = get('mRegSid'); subject = document.getElementById('mRegSub').value; pw = get('mRegPw'); pw2 = get('mRegPw2');
+    studentId = get('mRegSid'); subject = document.getElementById('mRegSub').value; pw = get('mRegPw'); pw2 = get('mRegPw2'); email = get('mRegEmail');
   } else {
     name = get('regName'); role = document.querySelector('input[name="regRole"]:checked').value;
-    studentId = get('regStudentId'); subject = document.getElementById('regSubject').value; pw = get('regPw'); pw2 = get('regPw2');
+    studentId = get('regStudentId'); subject = document.getElementById('regSubject').value; pw = get('regPw'); pw2 = get('regPw2'); email = document.getElementById('regEmail') ? get('regEmail') : '';
   }
   const msgEl = document.getElementById(isModal?'mRegMsg':'regMsg');
   if(pw!==pw2) { msgEl.textContent='비밀번호가 일치하지 않습니다.'; return; }
   msgEl.textContent='가입 중...';
   try{
-    const r = await fetch('/api/register', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name, role, studentId, subject, password: pw})});
+    const r = await fetch('/api/register', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name, role, studentId, subject, password: pw, email})});
     const j = await r.json();
     if(!r.ok) throw new Error(j.error||'실패');
     token = j.token; localStorage.setItem('seongsu_token', token); me = j.user;
@@ -241,8 +262,146 @@ async function handleRegister(e, isModal=false){
 }
 
 // profile
-function openProfile(){ document.getElementById('profileModal').classList.remove('hidden'); }
+function openProfile(){
+  // refresh edit fields from current me before showing
+  if(me){
+    const editName = document.getElementById('profEditName');
+    const editSid = document.getElementById('profEditStudentId');
+    const editSubWrap = document.getElementById('profEditSubjectWrap');
+    const editSub = document.getElementById('profEditSubject');
+    const editEmail = document.getElementById('profEditEmail');
+    if(editName) editName.value = me.name || '';
+    if(editEmail) editEmail.value = me.email || '';
+    if(me.role==='teacher'){
+      if(editSid) editSid.classList.add('hidden');
+      if(editSubWrap) editSubWrap.classList.remove('hidden');
+      if(editSub) editSub.value = me.subject || '';
+    } else {
+      if(editSid) { editSid.classList.remove('hidden'); editSid.value = me.studentId || ''; }
+      if(editSubWrap) editSubWrap.classList.add('hidden');
+    }
+    const msg = document.getElementById('profEditMsg');
+    if(msg) msg.textContent='';
+  }
+  document.getElementById('profileModal').classList.remove('hidden');
+}
 function closeProfile(){ document.getElementById('profileModal').classList.add('hidden'); }
+async function saveProfile(e){
+  e.preventDefault();
+  const msgEl = document.getElementById('profEditMsg');
+  const name = document.getElementById('profEditName').value.trim();
+  const email = document.getElementById('profEditEmail').value.trim();
+  let studentId = null, subject = null;
+  if(me.role==='teacher'){
+    subject = document.getElementById('profEditSubject').value;
+  } else {
+    studentId = document.getElementById('profEditStudentId').value.trim();
+  }
+  msgEl.textContent='저장 중...';
+  msgEl.className='text-sm text-center text-slate-500';
+  try{
+    const body = { name, email };
+    if(me.role==='teacher') body.subject = subject;
+    else body.studentId = studentId;
+    const r = await fetch('/api/profile', {method:'PUT', headers: headers(), body: JSON.stringify(body)});
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error || '저장 실패');
+    me = j.user; token = j.token; localStorage.setItem('seongsu_token', token);
+    msgEl.textContent='저장되었습니다!';
+    msgEl.className='text-sm text-center text-green-600';
+    afterLogin();
+    setTimeout(()=> msgEl.textContent='',1500);
+  }catch(err){
+    msgEl.textContent=err.message;
+    msgEl.className='text-sm text-center text-red-600';
+  }
+}
+// Account find / reset
+function openAccountFind(){
+  closeAuth();
+  document.getElementById('accountFindModal').classList.remove('hidden');
+  document.getElementById('findMsg').textContent='';
+  document.getElementById('findResult').classList.add('hidden');
+  document.getElementById('findResult').innerHTML='';
+  document.getElementById('resetArea').classList.add('hidden');
+  document.getElementById('resetMsg').textContent='';
+}
+function closeAccountFind(){ document.getElementById('accountFindModal').classList.add('hidden'); }
+let _foundEmail = '';
+let _resetRole = 'student';
+function toggleResetRole(role){
+  _resetRole = role;
+  document.getElementById('resetRoleStudent').className = role==='student' ? 'flex-1 py-2 bg-slate-900 text-white rounded-full text-xs font-bold' : 'flex-1 py-2 bg-white border rounded-full text-xs font-bold';
+  document.getElementById('resetRoleTeacher').className = role==='teacher' ? 'flex-1 py-2 bg-slate-900 text-white rounded-full text-xs font-bold' : 'flex-1 py-2 bg-white border rounded-full text-xs font-bold';
+  const sid = document.getElementById('resetStudentId');
+  const sub = document.getElementById('resetSubject');
+  if(role==='teacher'){ sid.classList.add('hidden'); sub.classList.remove('hidden'); }
+  else { sid.classList.remove('hidden'); sub.classList.add('hidden'); }
+}
+async function findAccount(){
+  const email = document.getElementById('findEmail').value.trim();
+  const msgEl = document.getElementById('findMsg');
+  const resultEl = document.getElementById('findResult');
+  const resetArea = document.getElementById('resetArea');
+  if(!email){ msgEl.textContent='이메일을 입력해주세요.'; msgEl.className='text-sm text-center text-red-600'; return; }
+  msgEl.textContent='조회 중...'; msgEl.className='text-sm text-center text-slate-500';
+  resultEl.classList.add('hidden'); resetArea.classList.add('hidden');
+  try{
+    const r = await fetch('/api/account/find', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email})});
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error || '조회 실패');
+    _foundEmail = email;
+    msgEl.textContent=''; msgEl.className='text-sm text-center';
+    resultEl.classList.remove('hidden');
+    // show users found (아이디 정보)
+    resultEl.innerHTML = '<div class="bg-slate-50 border rounded-2xl p-4 space-y-2"><div class="font-bold text-sm">찾은 계정 ('+j.users.length+'개)</div>' + j.users.map(u=>{
+      const isTeacher = u.role==='teacher';
+      const idLine = isTeacher ? '이름: <b>'+u.name+'</b> / 과목: <b>'+u.subject+'</b> (선생님)' : '이름: <b>'+u.name+'</b> / 학번: <b>'+u.studentId+'</b> (학생)';
+      const emailLine = '이메일: '+u.email;
+      const created = '가입일: '+fmtDate(u.createdAt);
+      return '<div class="bg-white border rounded-xl p-3 text-sm">'+idLine+'<br><span class="text-xs text-slate-500">'+emailLine+' · '+created+'</span></div>';
+    }).join('') + '<p class="text-xs text-amber-600 mt-2">⚠️ 비밀번호는 암호화되어 표시할 수 없습니다. 아래에서 새 비밀번호로 재설정하세요.</p></div>';
+    // prefill reset form with first found user's info
+    if(j.users.length>0){
+      const first = j.users[0];
+      document.getElementById('resetName').value = first.name || '';
+      if(first.role==='teacher'){
+        toggleResetRole('teacher');
+        document.getElementById('resetSubject').value = first.subject || '';
+      } else {
+        toggleResetRole('student');
+        document.getElementById('resetStudentId').value = first.studentId || '';
+      }
+    }
+    resetArea.classList.remove('hidden');
+  }catch(err){
+    msgEl.textContent=err.message; msgEl.className='text-sm text-center text-red-600';
+  }
+}
+async function resetPassword(){
+  const email = _foundEmail || document.getElementById('findEmail').value.trim();
+  const name = document.getElementById('resetName').value.trim();
+  const pw = document.getElementById('resetPw').value;
+  const pw2 = document.getElementById('resetPw2').value;
+  const msgEl = document.getElementById('resetMsg');
+  if(!email || !name || !pw){ msgEl.textContent='이메일, 이름, 새 비밀번호를 모두 입력해주세요.'; msgEl.className='text-sm text-center text-red-600'; return; }
+  if(pw!==pw2){ msgEl.textContent='비밀번호가 일치하지 않습니다.'; msgEl.className='text-sm text-center text-red-600'; return; }
+  if(pw.length<4){ msgEl.textContent='비밀번호는 4자 이상이어야 합니다.'; msgEl.className='text-sm text-center text-red-600'; return; }
+  let studentId = document.getElementById('resetStudentId').value.trim();
+  let subject = document.getElementById('resetSubject').value;
+  msgEl.textContent='변경 중...'; msgEl.className='text-sm text-center text-slate-500';
+  try{
+    const body = { email, name, newPassword: pw };
+    if(_resetRole==='teacher') body.subject = subject;
+    else body.studentId = studentId;
+    const r = await fetch('/api/account/reset-password', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error || '변경 실패');
+    msgEl.textContent='✅ '+j.message;
+    msgEl.className='text-sm text-center text-green-600';
+    setTimeout(()=>{ closeAccountFind(); alert('비밀번호가 변경되었습니다. 새 비밀번호로 로그인하세요.'); }, 800);
+  }catch(err){ msgEl.textContent=err.message; msgEl.className='text-sm text-center text-red-600'; }
+}
 async function uploadProfileImg(){
   const file = document.getElementById('profFile').files[0];
   if(!file) return;

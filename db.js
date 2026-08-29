@@ -70,6 +70,7 @@ const UserSchema = new mongoose.Schema({
   classId: String,
   className: String,
   notifyEnabled: Boolean,
+  email: String,
 });
 applyTransforms(UserSchema);
 const User = mongoose.model('User', UserSchema);

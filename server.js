@@ -177,12 +177,17 @@ function safeUser(u) {
 
 // --- API: Register ---
 app.post('/api/register', async (req, res) => {
-  const { name, role, studentId, subject, password } = req.body;
+  const { name, role, studentId, subject, password, email } = req.body;
   if (!name || !password) return res.status(400).json({ error: '이름과 비밀번호는 필수입니다.' });
   if (role === 'teacher') {
     if (!subject) return res.status(400).json({ error: '담당과목을 선택해주세요.' });
   } else {
     if (!studentId) return res.status(400).json({ error: '학번을 입력해주세요.' });
+  }
+  let normEmail = null;
+  if (email) {
+    normEmail = String(email).trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normEmail)) return res.status(400).json({ error: '올바른 이메일 형식을 입력해주세요.' });
   }
   const users = await User.find();
   const exists = users.find(u => {
@@ -190,6 +195,10 @@ app.post('/api/register', async (req, res) => {
     return u.role !== 'teacher' && u.studentId === String(studentId);
   });
   if (exists) return res.status(400).json({ error: '이미 가입된 정보입니다.' });
+  if (normEmail) {
+    const emailDup = users.find(u => u.email && String(u.email).toLowerCase() === normEmail);
+    if (emailDup) return res.status(400).json({ error: '이미 사용 중인 이메일입니다.' });
+  }
 
   const hash = await bcrypt.hash(password, 10);
   const newUser = await User.create({
@@ -200,7 +209,9 @@ app.post('/api/register', async (req, res) => {
     subject: role === 'teacher' ? subject : null,
     passwordHash: hash,
     profileImage: null,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    email: normEmail,
+    notifyEnabled: true
   });
   const token = signToken(newUser);
   res.json({ token, user: safeUser(newUser) });
@@ -251,6 +262,113 @@ app.delete('/api/profile/image', auth, async (req, res) => {
   await u.save();
   const newToken = signToken(u);
   res.json({ user: safeUser(u), token: newToken });
+});
+
+// --- API: Update profile (이름, 학번/과목, 이메일) ---
+app.put('/api/profile', auth, async (req, res) => {
+  const { name, studentId, subject, email } = req.body;
+  const me = await User.findOne({ id: req.user.id });
+  if (!me) return res.status(404).json({ error: '사용자 없음' });
+
+  const newName = name !== undefined ? String(name).trim() : me.name;
+  if (!newName) return res.status(400).json({ error: '이름을 입력해주세요.' });
+  if (newName.length > 20) return res.status(400).json({ error: '이름은 20자 이내여야 합니다.' });
+
+  let newEmail = me.email;
+  if (email !== undefined) {
+    const raw = String(email).trim();
+    if (raw === '') {
+      newEmail = null;
+    } else {
+      const norm = raw.toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(norm)) return res.status(400).json({ error: '올바른 이메일 형식이 아닙니다.' });
+      const dup = await User.findOne({ email: norm, id: { $ne: me.id } });
+      if (dup) return res.status(400).json({ error: '이미 사용 중인 이메일입니다.' });
+      newEmail = norm;
+    }
+  }
+
+  if (me.role === 'teacher') {
+    const newSubject = subject !== undefined ? String(subject).trim() : me.subject;
+    if (!newSubject) return res.status(400).json({ error: '담당과목을 선택해주세요.' });
+    // 중복 체크: 같은 이름+과목 선생님 존재 여부
+    const dupTeacher = await User.findOne({ role: 'teacher', name: newName, subject: newSubject, id: { $ne: me.id } });
+    if (dupTeacher) return res.status(400).json({ error: '이미 같은 이름과 과목의 선생님 계정이 존재합니다.' });
+    me.name = newName;
+    me.subject = newSubject;
+    me.email = newEmail;
+  } else {
+    const newSid = studentId !== undefined ? String(studentId).trim() : me.studentId;
+    if (!newSid) return res.status(400).json({ error: '학번을 입력해주세요.' });
+    if (!/^\d{5}$/.test(newSid)) return res.status(400).json({ error: '학번은 5자리 숫자여야 합니다. (예: 30101)' });
+    const dupStudent = await User.findOne({ role: { $ne: 'teacher' }, studentId: newSid, id: { $ne: me.id } });
+    if (dupStudent) return res.status(400).json({ error: '이미 사용 중인 학번입니다.' });
+    me.name = newName;
+    me.studentId = newSid;
+    me.email = newEmail;
+  }
+
+  await me.save();
+  const newToken = signToken(me);
+  res.json({ user: safeUser(me), token: newToken });
+});
+
+// --- API: Account find by email ---
+app.post('/api/account/find', async (req, res) => {
+  const { email } = req.body;
+  if (!email || !String(email).trim()) return res.status(400).json({ error: '이메일을 입력해주세요.' });
+  const norm = String(email).trim().toLowerCase();
+  const users = await User.find({ email: norm });
+  if (!users || users.length === 0) return res.status(404).json({ error: '해당 이메일로 가입된 계정을 찾을 수 없습니다.' });
+  // 비밀번호는 bcrypt로 복원 불가하므로 아이디 정보만 반환
+  const result = users.map(u => ({
+    name: u.name,
+    role: u.role,
+    studentId: u.studentId || null,
+    subject: u.subject || null,
+    email: u.email,
+    createdAt: u.createdAt,
+    id: u.id
+  }));
+  res.json({ users: result });
+});
+
+// --- API: Reset password via email ---
+app.post('/api/account/reset-password', async (req, res) => {
+  const { email, name, studentId, subject, newPassword } = req.body;
+  if (!email || !newPassword) return res.status(400).json({ error: '이메일과 새 비밀번호는 필수입니다.' });
+  if (String(newPassword).length < 4) return res.status(400).json({ error: '비밀번호는 4자 이상이어야 합니다.' });
+  const norm = String(email).trim().toLowerCase();
+  let candidates = await User.find({ email: norm });
+  if (!candidates || candidates.length === 0) return res.status(404).json({ error: '해당 이메일로 가입된 계정을 찾을 수 없습니다.' });
+
+  // 이메일이 중복될 수 있으므로 추가 식별자로 정확히 찾기 (이름+학번/과목)
+  let target = null;
+  if (candidates.length === 1) {
+    target = candidates[0];
+    if (!name || target.name !== String(name).trim()) {
+      return res.status(400).json({ error: '이름이 일치하지 않습니다. 찾은 계정의 이름과 정확히 입력해주세요.' });
+    }
+    if (target.role === 'teacher') {
+      if (subject && target.subject !== subject) return res.status(400).json({ error: '담당과목이 일치하지 않습니다.' });
+      if (!subject) return res.status(400).json({ error: '선생님 계정은 담당과목을 선택해야 합니다.' });
+    } else {
+      if (String(target.studentId) !== String(studentId)) return res.status(400).json({ error: '학번이 일치하지 않습니다.' });
+    }
+  } else {
+    // 여러 계정이 같은 이메일 쓰면 식별자 필요
+    if (!name) return res.status(400).json({ error: '같은 이메일에 여러 계정이 있습니다. 이름과 학번/과목을 함께 입력해주세요.', needSelector: true, users: candidates.map(u=>({ name: u.name, role: u.role, studentId: u.studentId, subject: u.subject })) });
+    target = candidates.find(u => {
+      if (u.name !== String(name).trim()) return false;
+      if (u.role === 'teacher') return u.subject === subject;
+      return u.studentId === String(studentId);
+    });
+    if (!target) return res.status(400).json({ error: '입력한 정보와 일치하는 계정을 찾을 수 없습니다.' });
+  }
+
+  target.passwordHash = await bcrypt.hash(String(newPassword), 10);
+  await target.save();
+  res.json({ ok: true, message: '비밀번호가 변경되었습니다. 새 비밀번호로 로그인하세요.', user: { name: target.name, role: target.role, studentId: target.studentId, subject: target.subject } });
 });
 
 // === Feature 1: Calendar (선생님 전용 작성) ===
