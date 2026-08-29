@@ -159,6 +159,7 @@ const ClassGroupMessageSchema = new mongoose.Schema({
   createdAt: String,
 });
 applyTransforms(ClassGroupMessageSchema);
+const ClassGroupMessage = mongoose.model('ClassGroupMessage', ClassGroupMessageSchema);
 
 const ClassPrivateMessageSchema = new mongoose.Schema({
   id: String,
@@ -173,6 +174,7 @@ const ClassPrivateMessageSchema = new mongoose.Schema({
   createdAt: String,
 });
 applyTransforms(ClassPrivateMessageSchema);
+const ClassPrivateMessage = mongoose.model('ClassPrivateMessage', ClassPrivateMessageSchema);
 
 const ClassVoteSchema = new mongoose.Schema({
   id: String,
@@ -185,6 +187,7 @@ const ClassVoteSchema = new mongoose.Schema({
   status: String,
 });
 applyTransforms(ClassVoteSchema);
+const ClassVote = mongoose.model('ClassVote', ClassVoteSchema);
 
 const ClassNotificationSchema = new mongoose.Schema({
   id: String,
@@ -199,6 +202,7 @@ const ClassNotificationSchema = new mongoose.Schema({
   read: Boolean,
 });
 applyTransforms(ClassNotificationSchema);
+const ClassNotification = mongoose.model('ClassNotification', ClassNotificationSchema);
 
 module.exports = {
   connectDB,
